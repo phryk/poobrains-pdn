@@ -1,0 +1,15 @@
+*.pyc
+*.db
+*.vim
+*.swp
+*.swo
+*.core
+*.log
+
+bin
+lib
+lib64
+include
+ssl
+*.json
+config.py
