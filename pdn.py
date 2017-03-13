@@ -7,15 +7,21 @@ import flask
 import poobrains
 import markdown
 import poobrains_markdown
+import md # markdown stuff specific to this site
 
 app = poobrains.app
 
-# markdown extensions
 
-class SourceExtension(markdown.Extension):
+def magic_markdown_loader(storable, handle):
 
-    def extendMarkdown(self, md, md_globals):
-        app.debugger.set_trace()
+    storables = poobrains.storage.Storable.children_keyed()
+    for k, v in storables.iteritems():
+        storables[k.lower()] = v # Allows us to use the correct case, or just lowercase
+
+    cls = storables[storable]
+    return cls.load(handle)
+
+poobrains_markdown.md.references.set_loader(magic_markdown_loader)
 
 # content types
 
@@ -40,6 +46,7 @@ class Source(poobrains.tagging.Taggable):
     description = poobrains_markdown.MarkdownField()
 
 
+@app.expose('/article/', mode='full')
 class Article(poobrains.tagging.Taggable):
 
     title = poobrains.storage.fields.CharField()
@@ -58,8 +65,6 @@ class CuratedContent(poobrains.tagging.Taggable):
     description = poobrains_markdown.MarkdownField()
     url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
 
-
-poobrains_markdown.parser.registerExtensions([SourceExtension()], [])
 
 DOGE = {
     'prefix': [
