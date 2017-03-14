@@ -8,7 +8,7 @@ class Bastard(dict):
     loader = None
 
     def __contains__(self, key):
-
+        import pudb; pudb.set_trace()
         if not super(Bastard, self).__contains__(key):
 
             if self._valid_magickey(key):

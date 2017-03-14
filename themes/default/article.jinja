@@ -1,0 +1,10 @@
+<article>
+
+    {% if mode == 'teaser' %}
+        <header>
+            <h2><a href="{{ content.url('full') }}">{{ content.title }}</a></h2>
+        </header>
+    {% endif %}
+
+    {{ content.text.render() }}
+</article>
