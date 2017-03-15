@@ -25,20 +25,20 @@ poobrains_markdown.md.references.set_loader(magic_markdown_loader)
 
 # content types
 
-class SourceOrganization(poobrains.tagging.Taggable):
+class SourceOrganization(poobrains.commenting.Commentable):
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
     url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
 
 
-class SourceAuthor(poobrains.tagging.Taggable):
+class SourceAuthor(poobrains.commenting.Commentable):
 
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
     url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
 
 
-class Source(poobrains.tagging.Taggable):
+class Source(poobrains.commenting.Commentable):
 
     type = poobrains.storage.fields.CharField()
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
@@ -47,7 +47,7 @@ class Source(poobrains.tagging.Taggable):
 
 
 @app.expose('/article/', mode='full')
-class Article(poobrains.tagging.Taggable):
+class Article(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     text = poobrains_markdown.MarkdownField()
@@ -59,7 +59,7 @@ class ArticleSource(poobrains.storage.Storable):
     source = poobrains.storage.fields.ForeignKeyField(Source)
 
 
-class CuratedContent(poobrains.tagging.Taggable):
+class CuratedContent(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     description = poobrains_markdown.MarkdownField()
