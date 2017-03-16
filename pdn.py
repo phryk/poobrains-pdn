@@ -4,6 +4,8 @@
 
 import random
 import flask
+import urllib
+import bs4
 import poobrains
 import markdown
 import poobrains_markdown
@@ -30,6 +32,16 @@ class SourceOrganization(poobrains.commenting.Commentable):
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
     link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    external_site_count = poobrains.storage.fields.IntegerField(null=True)
+
+    def update_external_site_count(self):
+
+        if self.link:
+            try:
+                html = urllib.urlopen(self.link)
+                dom = bs4.BeautifulSoup(html.read())
+                scripts = dom.find_all('script')
+
 
 
 @app.expose('/source/author/', mode='teaser')
