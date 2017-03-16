@@ -25,45 +25,68 @@ poobrains_markdown.md.references.set_loader(magic_markdown_loader)
 
 # content types
 
+@app.expose('/source/organization/', mode='teaser')
 class SourceOrganization(poobrains.commenting.Commentable):
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
-    url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
 
 
+@app.expose('/source/author/', mode='teaser')
 class SourceAuthor(poobrains.commenting.Commentable):
 
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
-    url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
 
 
+@app.expose('/source/', mode='teaser')
 class Source(poobrains.commenting.Commentable):
 
     type = poobrains.storage.fields.CharField()
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
-    url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
     description = poobrains_markdown.MarkdownField()
 
 
-@app.expose('/article/', mode='full')
+@app.expose('/article/', mode='teaser')
 class Article(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     text = poobrains_markdown.MarkdownField()
 
 
-class ArticleSource(poobrains.storage.Storable):
-
-    article = poobrains.storage.fields.ForeignKeyField(Article)
-    source = poobrains.storage.fields.ForeignKeyField(Source)
-
-
+@app.expose('/curated/', mode='teaser')
 class CuratedContent(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     description = poobrains_markdown.MarkdownField()
-    url = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+
+
+@app.site.box('menu_main')
+def menu_main():
+   
+    app.debugger.set_trace()
+    menu = poobrains.rendering.Menu('main')
+
+    try:
+        menu.append(Article.url('teaser'), 'Articles')
+    except poobrains.auth.PermissionDenied:
+        pass
+
+    try:
+        CuratedContent.url('teaser')
+        menu.append(CuratedContent.url('teaser'), 'Curated content')
+    except poobrains.auth.PermissionDenied:
+        pass
+
+    try:
+        menu.append(Source.url('teaser'), 'Sources')
+    except poobrains.auth.PermissionDenied:
+        pass
+
+    return menu
 
 
 DOGE = {
