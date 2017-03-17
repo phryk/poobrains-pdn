@@ -3,9 +3,9 @@
 # -*- coding: utf-8 -*-
 
 import random
-import flask
-import urllib
+import requests
 import bs4
+import flask
 import poobrains
 import markdown
 import poobrains_markdown
@@ -27,59 +27,97 @@ poobrains_markdown.md.references.set_loader(magic_markdown_loader)
 
 # content types
 
-@app.expose('/source/organization/', mode='teaser')
-class SourceOrganization(poobrains.commenting.Commentable):
-    parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
-    trustworthiness = poobrains.storage.fields.IntegerField()
-    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+class ScoredLink(poobrains.auth.Administerable):
+
+    form_blacklist = ['id', 'external_site_count']
+
+    link = poobrains.storage.fields.CharField(null=True, unique=True) # TODO: Add an URLField to poobrains.
     external_site_count = poobrains.storage.fields.IntegerField(null=True)
 
-    def update_external_site_count(self):
+
+    def scrape_external_site_count(self):
+        app.debugger.set_trace()
+        external_site_count = 0
 
         if self.link:
-            try:
-                html = urllib.urlopen(self.link)
-                dom = bs4.BeautifulSoup(html.read())
-                scripts = dom.find_all('script')
+
+            link_domain = self.link.split('/')[2]
+
+            html = requests.get(self.link).text
+            dom = bs4.BeautifulSoup(html)
+
+            scored_elements = {
+                'script': 'src',
+                'link': 'src',
+                'img': 'src',
+                'object': 'data'
+            }
+
+            for tag, attribute in scored_elements.iteritems():
+                for element in dom.find_all(tag):
+                    attribute_value = element.get(attribute)
+                    if isinstance(attribute_value, str) and attribute_value.find('://') >= 0:
+                        attribute_domain = attribute_value.split('/')[2]
+                        if attribute_domain != link_domain:
+                            external_site_count += 1
+
+        return external_site_count
+
+    
+    def save(self, *args, **kwargs):
+
+        try:
+            self.external_site_count = self.scrape_external_site_count()
+        except Exception as e: # Match all errors so failures here don't interfere with normal operations
+            poobrains.app.logger.error('Could not scrape external site count for URL: %s' % link)
+            poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
+
+        return super(ScoredLink, self).save(*args, **kwargs)
 
 
+@app.expose('/source/organization/', mode='full')
+class SourceOrganization(poobrains.commenting.Commentable):
 
-@app.expose('/source/author/', mode='teaser')
+    parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
+    trustworthiness = poobrains.storage.fields.IntegerField()
+    link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
+
+
+@app.expose('/source/author/', mode='full')
 class SourceAuthor(poobrains.commenting.Commentable):
 
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
-    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
 
-@app.expose('/source/', mode='teaser')
+@app.expose('/source/', mode='full')
 class Source(poobrains.commenting.Commentable):
 
     type = poobrains.storage.fields.CharField()
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
-    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
     description = poobrains_markdown.MarkdownField()
 
 
-@app.expose('/article/', mode='teaser')
+@app.expose('/article/', mode='full')
 class Article(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     text = poobrains_markdown.MarkdownField()
 
 
-@app.expose('/curated/', mode='teaser')
+@app.expose('/curated/', mode='full')
 class CuratedContent(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     description = poobrains_markdown.MarkdownField()
-    link = poobrains.storage.fields.CharField(null=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
 
 @app.site.box('menu_main')
 def menu_main():
    
-    app.debugger.set_trace()
     menu = poobrains.rendering.Menu('main')
 
     try:
