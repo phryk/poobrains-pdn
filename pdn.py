@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 
 import random
+import datetime
 import requests
 import bs4
 import flask
@@ -16,10 +17,11 @@ app = poobrains.app
 
 class ScoredLink(poobrains.auth.Administerable):
 
-    form_blacklist = ['id', 'external_site_count']
+    form_blacklist = ['id', 'external_site_count', 'updated']
 
     link = poobrains.storage.fields.CharField(null=True, unique=True) # TODO: Add an URLField to poobrains.
     external_site_count = poobrains.storage.fields.IntegerField(null=True)
+    updated = poobrains.storage.fields.DateTimeField(null=False, default=datetime.datetime.now)
 
 
     def scrape_external_site_count(self):
@@ -55,6 +57,7 @@ class ScoredLink(poobrains.auth.Administerable):
 
         try:
             self.external_site_count = self.scrape_external_site_count()
+            self.updated = datetime.datetime.now()
         except Exception as e: # Match all errors so failures here don't interfere with normal operations
             poobrains.app.logger.error('Could not scrape external site count for URL: %s' % self.link)
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
@@ -66,6 +69,7 @@ class ScoredLink(poobrains.auth.Administerable):
 class SourceOrganization(poobrains.commenting.Commentable):
 
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
+    title = poobrains.storage.fields.CharField()
     trustworthiness = poobrains.storage.fields.IntegerField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
@@ -73,6 +77,7 @@ class SourceOrganization(poobrains.commenting.Commentable):
 @app.expose('/source/author/', mode='full')
 class SourceAuthor(poobrains.commenting.Commentable):
 
+    title = poobrains.storage.fields.CharField()
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
     trustworthiness = poobrains.storage.fields.IntegerField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
@@ -81,6 +86,7 @@ class SourceAuthor(poobrains.commenting.Commentable):
 @app.expose('/source/', mode='full')
 class Source(poobrains.commenting.Commentable):
 
+    title = poobrains.storage.fields.CharField()
     type = poobrains.storage.fields.CharField()
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
