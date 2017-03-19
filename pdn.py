@@ -7,23 +7,10 @@ import requests
 import bs4
 import flask
 import poobrains
-import markdown
 import poobrains_markdown
-import md # markdown stuff specific to this site
 
 app = poobrains.app
 
-
-def magic_markdown_loader(storable, handle):
-
-    storables = poobrains.storage.Storable.children_keyed()
-    for k, v in storables.iteritems():
-        storables[k.lower()] = v # Allows us to use the correct case, or just lowercase
-
-    cls = storables[storable]
-    return cls.load(handle)
-
-poobrains_markdown.md.references.set_loader(magic_markdown_loader)
 
 # content types
 
@@ -69,7 +56,7 @@ class ScoredLink(poobrains.auth.Administerable):
         try:
             self.external_site_count = self.scrape_external_site_count()
         except Exception as e: # Match all errors so failures here don't interfere with normal operations
-            poobrains.app.logger.error('Could not scrape external site count for URL: %s' % link)
+            poobrains.app.logger.error('Could not scrape external site count for URL: %s' % self.link)
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
 
         return super(ScoredLink, self).save(*args, **kwargs)
