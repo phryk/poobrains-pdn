@@ -13,3 +13,4 @@ include
 ssl
 *.json
 config.py
+upload
