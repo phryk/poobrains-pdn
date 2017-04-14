@@ -8,7 +8,6 @@ import requests
 import bs4
 import flask
 import poobrains
-import poobrains_markdown
 
 app = poobrains.app
 
@@ -90,21 +89,29 @@ class Source(poobrains.commenting.Commentable):
     type = poobrains.storage.fields.CharField()
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
-    description = poobrains_markdown.MarkdownField()
+    description = poobrains.md.MarkdownField()
 
 
 @app.expose('/article/', mode='full')
 class Article(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
-    text = poobrains_markdown.MarkdownField()
+    text = poobrains.md.MarkdownField()
+
+
+@app.expose('/projects/', mode='full')
+class Project(poobrains.commenting.Commentable):
+
+    title = poobrains.storage.fields.CharField()
+    text = poobrains.md.MarkdownField()
+    link = poobrains.storage.fields.CharField()
 
 
 @app.expose('/curated/', mode='full')
 class CuratedContent(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
-    description = poobrains_markdown.MarkdownField()
+    description = poobrains.md.MarkdownField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
 
