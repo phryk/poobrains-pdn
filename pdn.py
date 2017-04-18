@@ -2,15 +2,90 @@
 
 # -*- coding: utf-8 -*-
 
+import os
 import random
 import datetime
 import requests
 import bs4
+import markdown
 import flask
 import poobrains
 
+from wand import image, drawing, color
+
 app = poobrains.app
 
+class Meme(markdown.inlinepatterns.Pattern):
+
+    name = None
+
+    def __init__(self, pattern, name, markdown_instance=None):
+
+        super(Meme, self).__init__(pattern, markdown_instance=markdown_instance)
+        self.name = name
+
+    def handleMatch(self, match):
+
+        if match:
+
+            Memesez = match.group(2)
+            element = markdown.util.etree.Element('img')
+            element.set('src', "/meme/%s/%s" % (self.name, Memesez))
+            element.set('alt', Memesez)
+            return element
+
+        return super(Meme, self).handleMatch(match)
+
+
+class Memextension(markdown.Extension):
+
+    def extendMarkdown(self, md, md_globals):
+        for name in app.config['MEMES']:
+            md.inlinePatterns.add(name, Meme('<%s>(.*?)</%s>' % (name, name), name), '<reference')
+
+poobrains.md.md.registerExtensions([Memextension()], [])
+
+@app.expose('/meme/<string:name>/<string:text>')
+class Mememage(poobrains.auth.Protected):
+    
+    def view(self, mode='full', name=None, text=None):
+        app.debugger.set_trace()
+
+        if name in app.config['MEMES']:
+
+            with image.Image(filename=app.config['MEMES'][name]) as template:
+
+                img = template.clone()
+                img.transform(resize='750')
+
+                # TODO: is input sanitation still needed?
+                if ':' in text:
+                    upper, lower = text.split(':')
+                else:
+                    upper = None
+                    lower = text
+
+                t = drawing.Drawing()
+                t.stroke_color = color.Color('#000000')
+                t.fill_color = color.Color('#ffffff')
+                t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
+                t.font_size = 60
+
+                if upper:
+                    t.gravity = 'north'
+                    t.text(0,0, upper)
+                if lower:
+                    t.gravity = 'south'
+                    t.text(0,0, lower)
+
+                t(img)
+
+            return flask.Response(
+                img.make_blob('png'),
+                mimetype='image/png'
+            )
+
+        raise poobrains.auth.AccessDenied()
 
 # content types
 
@@ -69,7 +144,6 @@ class SourceOrganization(poobrains.commenting.Commentable):
 
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
     title = poobrains.storage.fields.CharField()
-    trustworthiness = poobrains.storage.fields.IntegerField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
 
@@ -78,7 +152,6 @@ class SourceAuthor(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
-    trustworthiness = poobrains.storage.fields.IntegerField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
 
 
@@ -122,18 +195,23 @@ def menu_main():
 
     try:
         menu.append(Article.url('teaser'), 'Articles')
-    except poobrains.auth.PermissionDenied:
+    except poobrains.auth.AccessDenied:
+        pass
+
+    try:
+        menu.append(Project.url('teaser'), 'Projects')
+    except poobrains.auth.AccessDenied:
         pass
 
     try:
         CuratedContent.url('teaser')
         menu.append(CuratedContent.url('teaser'), 'Curated content')
-    except poobrains.auth.PermissionDenied:
+    except poobrains.auth.AccessDenied:
         pass
 
     try:
         menu.append(Source.url('teaser'), 'Sources')
-    except poobrains.auth.PermissionDenied:
+    except poobrains.auth.AccessDenied:
         pass
 
     return menu
@@ -146,7 +224,6 @@ DOGE = {
         'many',
         'more',
         'so',
-        'all your base',
         'lol',
         'very',
         'omg'
@@ -166,7 +243,6 @@ DOGE = {
         'python',
         'flask',
         'poobrains',
-        'are belong to us',
         'NOT PHP'
     ],
 
