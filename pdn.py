@@ -49,7 +49,6 @@ poobrains.md.md.registerExtensions([Memextension()], [])
 class Mememage(poobrains.auth.Protected):
     
     def view(self, mode='full', name=None, text=None):
-        app.debugger.set_trace()
 
         if name in app.config['MEMES']:
 
@@ -57,7 +56,11 @@ class Mememage(poobrains.auth.Protected):
             extension = filename.split('.')[-1]
 
             with image.Image(filename=filename) as template:
+                poobrains.app.debugger.set_trace()
 
+                #template.transform(resize='750')
+                height = int(template.height * (750. / template.width))
+                template.resize(width=750, height=height)
                 img = template.clone()
                 #img.transform(resize='750')
 
@@ -70,7 +73,9 @@ class Mememage(poobrains.auth.Protected):
 
                 if extension == 'gif':
 
-                    with image.Image(width=template.width, height=template.height) as gif: 
+                    with image.Image(width=img.width, height=img.height) as gif:
+
+
                         for frame in img.sequence:
 
                             with frame.clone() as frame_modded:
@@ -89,7 +94,11 @@ class Mememage(poobrains.auth.Protected):
                                         t.gravity = 'south'
                                         t.text(0,0, lower)
                                     t(frame_modded)
-                                gif.sequence.append(frame_modded)
+
+                                if index == 0:
+                                    gif.sequence[0] = frame_modded
+                                else:
+                                    gif.sequence.append(frame_modded)
                                 gif.sequence[index].delay = delay
 
 
