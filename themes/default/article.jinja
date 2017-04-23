@@ -1,9 +1,15 @@
-<article>
-    {% if mode == 'teaser' %}
-        <header>
-            <h2><a href="{{ content.url('full') }}">{{ content.title }}</a></h2>
-        </header>
-    {% endif %}
+{% extends "commentable.jinja" %}
 
-    {{ content.text.render() }}
-</article>
+{% block header %}
+    {% if mode != 'full' %}
+        <h2><a href="{{ content.url('full') }}">{{ content.title }}</a></h2>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if mode == 'full' %}
+        {{ content.text.render() }}
+    {% else %}
+        {{ content.text|truncate }}
+    {% endif %}
+{% endblock %}
