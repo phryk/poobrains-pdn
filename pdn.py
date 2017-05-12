@@ -56,7 +56,6 @@ class Mememage(poobrains.auth.Protected):
             extension = filename.split('.')[-1]
 
             with image.Image(filename=filename) as template:
-                poobrains.app.debugger.set_trace()
 
                 #template.transform(resize='750')
                 height = int(template.height * (750. / template.width))
@@ -147,7 +146,7 @@ class ScoredLink(poobrains.auth.Administerable):
 
 
     def scrape_external_site_count(self):
-        app.debugger.set_trace()
+
         external_site_count = 0
 
         if self.link:
