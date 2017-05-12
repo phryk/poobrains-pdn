@@ -101,7 +101,7 @@ class Mememage(poobrains.auth.Protected):
                                 gif.sequence[index].delay = delay
 
 
-                        gif.save(filename='memes/foo.gif')
+                        #gif.save(filename='memes/foo.gif')
                         return flask.Response(
                             gif.make_blob('gif'),
                             mimetype='image/gif'
@@ -123,7 +123,7 @@ class Mememage(poobrains.auth.Protected):
                         t.text(0,0, lower)
                     t(img)
 
-                img.save(filename='memes/foo.png')
+                #img.save(filename='memes/foo.png')
                 return flask.Response(
                     img.make_blob('png'),
                     mimetype='image/png'
