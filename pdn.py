@@ -166,7 +166,7 @@ class ScoredLink(poobrains.auth.Administerable):
             for tag, attribute in scored_elements.iteritems():
                 for element in dom.find_all(tag):
                     attribute_value = element.get(attribute)
-                    if isinstance(attribute_value, str) and attribute_value.find('://') >= 0:
+                    if isinstance(attribute_value, basestring) and attribute_value.find('://') >= 0:
                         attribute_domain = attribute_value.split('/')[2]
                         if attribute_domain != link_domain:
                             external_site_count += 1
@@ -180,7 +180,6 @@ class ScoredLink(poobrains.auth.Administerable):
             self.external_site_count = self.scrape_external_site_count()
             self.updated = datetime.datetime.now()
         except Exception as e: # Match all errors so failures here don't interfere with normal operations
-            print "WE SHOULD GET LOGGING SHIT", e, '##################################################################################'
             poobrains.app.logger.error('Could not scrape external site count for URL: %s' % self.link)
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
 
