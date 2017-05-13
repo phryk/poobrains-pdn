@@ -180,6 +180,7 @@ class ScoredLink(poobrains.auth.Administerable):
             self.external_site_count = self.scrape_external_site_count()
             self.updated = datetime.datetime.now()
         except Exception as e: # Match all errors so failures here don't interfere with normal operations
+            print "WE SHOULD GET LOGGING SHIT", e
             poobrains.app.logger.error('Could not scrape external site count for URL: %s' % self.link)
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
 
