@@ -10,6 +10,6 @@
     {% if mode == 'full' %}
         {{ content.text.render() }}
     {% else %}
-        {{ content.text|truncate }}
+        <pre class="markdown">{{ content.text|truncate }}</pre>
     {% endif %}
 {% endblock %}

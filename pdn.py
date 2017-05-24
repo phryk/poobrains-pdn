@@ -102,10 +102,15 @@ class Mememage(poobrains.auth.Protected):
 
 
                         #gif.save(filename='memes/foo.gif')
-                        return flask.Response(
+                        r = flask.Response(
                             gif.make_blob('gif'),
                             mimetype='image/gif'
                         )
+
+                        r.cache_control.public = True
+                        r.cache_control.max_age = 604800
+
+                        return r
 
                 else:
 
@@ -124,12 +129,14 @@ class Mememage(poobrains.auth.Protected):
                     t(img)
 
                 #img.save(filename='memes/foo.png')
-                return flask.Response(
+                r = flask.Response(
                     img.make_blob('png'),
                     mimetype='image/png'
                 )
+                r.cache_control.public = True
+                r.cache_control.max_age = 604800
 
-
+                return r
 
 
         raise poobrains.auth.AccessDenied()
