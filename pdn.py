@@ -55,88 +55,91 @@ class Mememage(poobrains.auth.Protected):
             filename = app.config['MEMES'][name]
             extension = filename.split('.')[-1]
 
-            with image.Image(filename=filename) as template:
+            template = image.Image(filename=filename)
 
-                #template.transform(resize='750')
-                height = int(template.height * (750. / template.width))
-                template.resize(width=750, height=height)
-                img = template.clone()
-                #img.transform(resize='750')
+            #template.transform(resize='750')
+            height = int(template.height * (750.0 / template.width))
+            template.resize(width=750, height=height)
+            img = template.clone()
+            del template
+            #img.transform(resize='750')
 
-                # TODO: is input sanitation still needed?
-                if ':' in text:
-                    upper, lower = text.split(':')
-                else:
-                    upper = None
-                    lower = text
+            # TODO: is input sanitation still needed?
+            if ':' in text:
+                upper, lower = text.split(':')
+            else:
+                upper = None
+                lower = text
 
-                if extension == 'gif':
+            if extension == 'gif':
 
-                    with image.Image(width=img.width, height=img.height) as gif:
+                gif = image.Image(width=img.width, height=img.height)
 
+                for frame in img.sequence:
 
-                        for frame in img.sequence:
+                    frame_modded = frame.clone()
 
-                            with frame.clone() as frame_modded:
-
-                                index = frame.index
-                                delay = frame.delay
-                                with drawing.Drawing() as t:
-                                    t.stroke_color = color.Color('#000000')
-                                    t.fill_color = color.Color('#ffffff')
-                                    t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
-                                    t.font_size = 60
-                                    if upper:
-                                        t.gravity = 'north'
-                                        t.text(0,0, upper)
-                                    if lower:
-                                        t.gravity = 'south'
-                                        t.text(0,0, lower)
-                                    t(frame_modded)
-
-                                if index == 0:
-                                    gif.sequence[0] = frame_modded
-                                else:
-                                    gif.sequence.append(frame_modded)
-                                gif.sequence[index].delay = delay
-
-
-                        #gif.save(filename='memes/foo.gif')
-                        r = flask.Response(
-                            gif.make_blob('gif'),
-                            mimetype='image/gif'
-                        )
-
-                        r.cache_control.public = True
-                        r.cache_control.max_age = 604800
-
-                        return r
-
-                else:
+                    index = frame.index
+                    delay = frame.delay
+                    del frame
 
                     t = drawing.Drawing()
                     t.stroke_color = color.Color('#000000')
                     t.fill_color = color.Color('#ffffff')
                     t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
                     t.font_size = 60
-
                     if upper:
                         t.gravity = 'north'
                         t.text(0,0, upper)
                     if lower:
                         t.gravity = 'south'
                         t.text(0,0, lower)
-                    t(img)
+                    t(frame_modded)
+                    del t
 
-                #img.save(filename='memes/foo.png')
+                    if index == 0:
+                        gif.sequence[0] = frame_modded
+                    else:
+                        gif.sequence.append(frame_modded)
+                    gif.sequence[index].delay = delay
+
+
+                #gif.save(filename='memes/foo.gif')
                 r = flask.Response(
-                    img.make_blob('png'),
-                    mimetype='image/png'
+                    gif.make_blob('gif'),
+                    mimetype='image/gif'
                 )
+
                 r.cache_control.public = True
                 r.cache_control.max_age = 604800
 
                 return r
+
+            else:
+
+                t = drawing.Drawing()
+                t.stroke_color = color.Color('#000000')
+                t.fill_color = color.Color('#ffffff')
+                t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
+                t.font_size = 60
+
+                if upper:
+                    t.gravity = 'north'
+                    t.text(0,0, upper)
+                if lower:
+                    t.gravity = 'south'
+                    t.text(0,0, lower)
+                t(img)
+
+            #img.save(filename='memes/foo.png')
+            r = flask.Response(
+                img.make_blob('png'),
+                mimetype='image/png'
+            )
+            r.cache_control.public = True
+            r.cache_control.max_age = 604800
+
+            return r
 
 
         raise poobrains.auth.AccessDenied()
