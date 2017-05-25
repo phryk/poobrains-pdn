@@ -11,7 +11,8 @@ import markdown
 import flask
 import poobrains
 
-from wand import image, drawing, color
+from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont, ImageSequence, ImageFilter
 
 app = poobrains.app
 
@@ -51,19 +52,7 @@ class Mememage(poobrains.auth.Protected):
     def view(self, mode='full', name=None, text=None):
 
         if name in app.config['MEMES']:
-
-            filename = app.config['MEMES'][name]
-            extension = filename.split('.')[-1]
-
-            template = image.Image(filename=filename)
-
-            #template.transform(resize='750')
-            height = int(template.height * (750.0 / template.width))
-            template.resize(width=750, height=height)
-            img = template.clone()
-            del template
-            #img.transform(resize='750')
-
+            
             # TODO: is input sanitation still needed?
             if ':' in text:
                 upper, lower = text.split(':')
@@ -71,42 +60,67 @@ class Mememage(poobrains.auth.Protected):
                 upper = None
                 lower = text
 
+            filename = os.path.join(app.root_path, app.config['MEMES'][name])
+            extension = filename.split('.')[-1]
+
+            template = Image.open(filename)
+            print os.path.join(app.root_path, 'LeagueGothic-Regular.otf')
+            font = ImageFont.truetype(os.path.join(app.root_path, 'LeagueGothic-Regular.otf'), 80)
+
+            resized = (750, int(template.height * (750.0 / template.width)))
+
+            if upper:
+                upper_size = font.getsize(upper)
+                upper_x = int(round(resized[0] / 2.0 - upper_size[0] / 2.0))
+                upper_y = 0
+
+            if lower:
+                lower_size = font.getsize(lower)
+                lower_x = int(round(resized[0] / 2.0 - lower_size[0] / 2.0))
+                lower_y = resized[1] - lower_size[1] - 10 # last int is margin from bottom
+
+
             if extension == 'gif':
 
-                gif = image.Image(width=img.width, height=img.height)
+                frames = []
+                for frame in ImageSequence.Iterator(template):
 
-                for frame in img.sequence:
+                    frame = frame.convert('RGBA').resize(resized, Image.BICUBIC)
+                    t = Image.new('RGBA', frame.size, (0,0,0,0))
+                    d = ImageDraw.Draw(t)
 
-                    frame_modded = frame.clone()
-
-                    index = frame.index
-                    delay = frame.delay
-                    del frame
-
-                    t = drawing.Drawing()
-                    t.stroke_color = color.Color('#000000')
-                    t.fill_color = color.Color('#ffffff')
-                    t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
-                    t.font_size = 60
                     if upper:
-                        t.gravity = 'north'
-                        t.text(0,0, upper)
+                        d.text((upper_x-1, upper_y-1), upper, font=font, fill=(0,0,0,255))
+                        d.text((upper_x-1, upper_y+1), upper, font=font, fill=(0,0,0,255))
+                        d.text((upper_x+1, upper_y+1), upper, font=font, fill=(0,0,0,255))
+                        d.text((upper_x+1, upper_y-1), upper, font=font, fill=(0,0,0,255))
+                        d.text((upper_x, upper_y), upper, font=font, fill=(255,255,255,255))
+
                     if lower:
-                        t.gravity = 'south'
-                        t.text(0,0, lower)
-                    t(frame_modded)
-                    del t
+                        d.text((lower_x-1, lower_y-1), lower, font=font, fill=(0,0,0,255))
+                        d.text((lower_x-1, lower_y+1), lower, font=font, fill=(0,0,0,255))
+                        d.text((lower_x+1, lower_y+1), lower, font=font, fill=(0,0,0,255))
+                        d.text((lower_x+1, lower_y-1), lower, font=font, fill=(0,0,0,255))
+                        d.text((lower_x, lower_y), lower, font=font, fill=(255,255,255,255))
 
-                    if index == 0:
-                        gif.sequence[0] = frame_modded
-                    else:
-                        gif.sequence.append(frame_modded)
-                    gif.sequence[index].delay = delay
+                    #t.filter(ImageFilter.EMBOSS)
+                    frames.append(Image.alpha_composite(frame, t))
+
+                #out = Image.new('P', template.size, color=template.info.transparent)
+                meme = frames.pop(0).convert('P')
+
+                if template.info.has_key('duration'):
+                    meme.info['duration'] = template.info['duration']
+
+                if template.info.has_key('loop'):
+                    meme.info['loop'] = template.info['loop']
+
+                out = BytesIO()
+                meme.save(out, save_all=True, append_images=frames, format='GIF')
 
 
-                #gif.save(filename='memes/foo.gif')
                 r = flask.Response(
-                    gif.make_blob('gif'),
+                    out.getvalue(),
                     mimetype='image/gif'
                 )
 
@@ -115,34 +129,46 @@ class Mememage(poobrains.auth.Protected):
 
                 return r
 
+
             else:
 
-                t = drawing.Drawing()
-                t.stroke_color = color.Color('#000000')
-                t.fill_color = color.Color('#ffffff')
-                t.font = os.path.join(poobrains.app.root_path, 'LeagueGothic-Regular.otf')
-                t.font_size = 60
+                meme = template.convert('RGBA').resize(resized, Image.BICUBIC)
+
+                text_layer = Image.new('RGBA', resized, (0,0,0,0))
+                text_draw = ImageDraw.Draw(text_layer)
 
                 if upper:
-                    t.gravity = 'north'
-                    t.text(0,0, upper)
+                    outlined_text(text_draw, upper, upper_x, upper_y, font=font)
+
                 if lower:
-                    t.gravity = 'south'
-                    t.text(0,0, lower)
-                t(img)
+                    outlined_text(text_draw, lower, lower_x, lower_y, font=font)
 
-            #img.save(filename='memes/foo.png')
-            r = flask.Response(
-                img.make_blob('png'),
-                mimetype='image/png'
-            )
-            r.cache_control.public = True
-            r.cache_control.max_age = 604800
+                meme = Image.alpha_composite(meme, text_layer)
 
-            return r
+                out = BytesIO()
+                meme.save(out, format='PNG')
+                
+                #img.save(filename='memes/foo.png')
+                r = flask.Response(
+                    out.getvalue(),
+                    mimetype='image/png'
+                )
+                r.cache_control.public = True
+                r.cache_control.max_age = 604800
+
+                return r
 
 
         raise poobrains.auth.AccessDenied()
+
+
+def outlined_text(drawing, text, x=0, y=0, font=None):
+    drawing.text((x-1, y-1), text, font=font, fill=(0,0,0,255))
+    drawing.text((x-1, y+1), text, font=font, fill=(0,0,0,255))
+    drawing.text((x+1, y+1), text, font=font, fill=(0,0,0,255))
+    drawing.text((x+1, y-1), text, font=font, fill=(0,0,0,255))
+    drawing.text((x, y), text, font=font, fill=(255,255,255,255))
+
 
 # content types
 
