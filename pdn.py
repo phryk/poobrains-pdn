@@ -12,7 +12,7 @@ import flask
 import poobrains
 
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont, ImageSequence, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageSequence
 
 app = poobrains.app
 
@@ -64,7 +64,6 @@ class Mememage(poobrains.auth.Protected):
             extension = filename.split('.')[-1]
 
             template = Image.open(filename)
-            print os.path.join(app.root_path, 'LeagueGothic-Regular.otf')
             font = ImageFont.truetype(os.path.join(app.root_path, 'LeagueGothic-Regular.otf'), 80)
 
             resized = (750, int(template.height * (750.0 / template.width)))
@@ -86,27 +85,17 @@ class Mememage(poobrains.auth.Protected):
                 for frame in ImageSequence.Iterator(template):
 
                     frame = frame.convert('RGBA').resize(resized, Image.BICUBIC)
-                    t = Image.new('RGBA', frame.size, (0,0,0,0))
-                    d = ImageDraw.Draw(t)
+                    text_layer = Image.new('RGBA', frame.size, (0,0,0,0))
+                    text_draw = ImageDraw.Draw(text_layer)
 
                     if upper:
-                        d.text((upper_x-1, upper_y-1), upper, font=font, fill=(0,0,0,255))
-                        d.text((upper_x-1, upper_y+1), upper, font=font, fill=(0,0,0,255))
-                        d.text((upper_x+1, upper_y+1), upper, font=font, fill=(0,0,0,255))
-                        d.text((upper_x+1, upper_y-1), upper, font=font, fill=(0,0,0,255))
-                        d.text((upper_x, upper_y), upper, font=font, fill=(255,255,255,255))
+                        outlined_text(text_draw, upper, upper_x, upper_y, font=font)
 
                     if lower:
-                        d.text((lower_x-1, lower_y-1), lower, font=font, fill=(0,0,0,255))
-                        d.text((lower_x-1, lower_y+1), lower, font=font, fill=(0,0,0,255))
-                        d.text((lower_x+1, lower_y+1), lower, font=font, fill=(0,0,0,255))
-                        d.text((lower_x+1, lower_y-1), lower, font=font, fill=(0,0,0,255))
-                        d.text((lower_x, lower_y), lower, font=font, fill=(255,255,255,255))
+                        outlined_text(text_draw, lower, lower_x, lower_y, font=font)
 
-                    #t.filter(ImageFilter.EMBOSS)
-                    frames.append(Image.alpha_composite(frame, t))
+                    frames.append(Image.alpha_composite(frame, text_layer))
 
-                #out = Image.new('P', template.size, color=template.info.transparent)
                 meme = frames.pop(0).convert('P')
 
                 if template.info.has_key('duration'):
