@@ -16,49 +16,54 @@ from PIL import Image, ImageDraw, ImageFont, ImageSequence
 
 app = poobrains.app
 
-class Meme(markdown.inlinepatterns.Pattern):
+class MemePattern(markdown.inlinepatterns.Pattern):
 
     name = None
 
     def __init__(self, pattern, name, markdown_instance=None):
 
-        super(Meme, self).__init__(pattern, markdown_instance=markdown_instance)
+        super(MemePattern, self).__init__(pattern, markdown_instance=markdown_instance)
         self.name = name
 
     def handleMatch(self, match):
 
         if match:
 
-            Memesez = match.group(2)
+            caption = match.group(2)
+            if not MemeWhiteList.select().where(MemeWhiteList.caption == caption).count():
+                cache_entry = MemeWhiteList()
+                cache_entry.caption = caption
+                cache_entry.save()
+
             element = markdown.util.etree.Element('img')
-            element.set('src', "/meme/%s/%s" % (self.name, Memesez))
-            element.set('alt', Memesez)
+            element.set('src', "/meme/%s/%s" % (self.name, caption))
+            element.set('alt', caption)
             return element
 
-        return super(Meme, self).handleMatch(match)
+        return super(MemePattern, self).handleMatch(match)
 
 
 class Memextension(markdown.Extension):
 
     def extendMarkdown(self, md, md_globals):
         for name in app.config['MEMES']:
-            md.inlinePatterns.add(name, Meme('<%s>(.*?)</%s>' % (name, name), name), '<reference')
+            md.inlinePatterns.add(name, MemePattern('<%s>(.*?)</%s>' % (name, name), name), '<reference')
 
 poobrains.md.md.registerExtensions([Memextension()], [])
 
-@app.expose('/meme/<string:name>/<string:text>')
+@app.expose('/meme/<string:name>/<string:caption>')
 class Mememage(poobrains.auth.Protected):
     
-    def view(self, mode='full', name=None, text=None):
+    def view(self, mode='full', name=None, caption=None):
 
-        if name in app.config['MEMES']:
-            
+        if name in app.config['MEMES'] and MemeWhiteList.select().where(MemeWhiteList.caption == caption).count():
+
             # TODO: is input sanitation still needed?
-            if ':' in text:
-                upper, lower = text.split(':')
+            if ':' in caption and len(caption.split(':')) == 2:
+                upper, lower = caption.split(':')
             else:
                 upper = None
-                lower = text
+                lower = caption
 
             filename = os.path.join(app.root_path, app.config['MEMES'][name])
             extension = filename.split('.')[-1]
@@ -160,6 +165,13 @@ def outlined_text(drawing, text, x=0, y=0, font=None):
 
 
 # content types
+
+class MemeWhiteList(poobrains.storage.Model):
+
+    # TODO: add functionality to remove references to deleted/removed storable instances
+
+    caption = poobrains.storage.fields.CharField()
+
 
 class ScoredLink(poobrains.auth.Administerable):
 
