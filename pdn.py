@@ -223,28 +223,40 @@ class ScoredLink(poobrains.auth.Administerable):
         return super(ScoredLink, self).save(*args, **kwargs)
 
 
+    @property
+    def name(self):
+        return self.link
+
+
 @app.expose('/source/organization/', mode='full')
 class SourceOrganization(poobrains.commenting.Commentable):
 
     parent = poobrains.storage.fields.ForeignKeyField('self', null=True)
     title = poobrains.storage.fields.CharField()
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
+    description = poobrains.md.MarkdownField(null=True)
 
 
 @app.expose('/source/author/', mode='full')
 class SourceAuthor(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
-    organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization, null=True)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
+    description = poobrains.md.MarkdownField(null=True)
+
+
+class SourceOrganizationAuthor(poobrains.storage.Model):
+
+    organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization)
+    author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
 
 
 @app.expose('/source/', mode='full')
 class Source(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
-    type = poobrains.storage.fields.CharField()
-    author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
+    type = poobrains.storage.fields.CharField() # TODO: We need some logic to make this useful. Also, build enum type compatible to sqlite+postgres?
+    author = poobrains.storage.fields.ForeignKeyField(SourceOrganizationAuthor)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
     description = poobrains.md.MarkdownField()
 
