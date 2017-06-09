@@ -1,0 +1,6 @@
+{% extends "commentable.jinja" %}
+
+{% block content %}
+    <div class="project-url">Project URL: <a href="{{ content.link }}">{{ content.link }}</a></div>
+    {{ content.text.render() }}
+{% endblock %}
