@@ -1,0 +1,16 @@
+{% extends "commentable.jinja" %}
+
+{% block header %}
+    {% if mode != 'full' %}
+    <h2><a href="{{ content.url('full') }}">{{ content.title }}</a></h2>
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+    {% if content.parent %}
+        <div>Parent organization: <a class="parent" href="{{ content.parent.url('full', quiet=True) }}">{{ content.parent.title }}</a>
+    {% endif %}
+
+    {{ content.description.render() }}
+{% endblock %}
