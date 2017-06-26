@@ -1,0 +1,10 @@
+{% extends "commentable.jinja" %}
+
+{% block content %}
+    {% if mode == 'full' %}
+        <span class="curated-content-source-link">{{ content.link.render('teaser') }}</span>
+        {{ content.description.render() }}
+    {% else %}
+        {{ content.description|truncate }}
+    {% endif %}
+{% endblock %}
