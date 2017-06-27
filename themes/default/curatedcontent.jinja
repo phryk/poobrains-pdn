@@ -2,8 +2,9 @@
 
 {% block content %}
     {% if mode == 'full' %}
-        <span class="curated-content-source-link">{{ content.link.render('teaser') }}</span>
+        <a class="tldr" href="#source-link">SHUT THE FUCK UP AND GIVE ME THE LINK!</a>
         {{ content.description.render() }}
+        <span id="source-link">{{ content.link.render('inline') }}</span>
     {% else %}
         {{ content.description|truncate }}
     {% endif %}

@@ -2,6 +2,7 @@
 
 # -*- coding: utf-8 -*-
 
+import math
 import os
 import random
 import datetime
@@ -181,6 +182,10 @@ class ScoredLink(poobrains.auth.Administerable):
     external_site_count = poobrains.storage.fields.IntegerField(null=True)
     updated = poobrains.storage.fields.DateTimeField(null=False, default=datetime.datetime.now)
 
+    mean = None
+    median = None
+    set_size = None
+
 
     def scrape_external_site_count(self):
 
@@ -221,6 +226,29 @@ class ScoredLink(poobrains.auth.Administerable):
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
 
         return super(ScoredLink, self).save(*args, **kwargs)
+
+    
+    def prepared(self):
+
+        super(ScoredLink, self).prepared()
+        self.set_size = self.__class__.select().count()
+
+        external_site_counts = []
+        for row in self.__class__.select(self.__class__.external_site_count).order_by(self.__class__.external_site_count).dicts():
+            external_site_counts.append(row['external_site_count'])
+
+        self.mean = sum(external_site_counts) / float(len(external_site_counts))
+
+        median_idx = int(math.floor(len(external_site_counts) / 2.0))
+        if len(external_site_counts) % 2 == 0:
+
+            a = external_site_counts[median_idx -1]
+            b = external_site_counts[median_idx]
+
+            self.median = a + b / 2.0
+        else:
+            self.median = external_site_counts[median_idx]
+
 
 
     @property
