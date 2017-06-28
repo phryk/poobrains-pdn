@@ -1,0 +1,17 @@
+<div class="sticky">
+
+    {% block menu_main %}
+    {% if g.boxes.menu_main %}
+        {{ g.boxes.menu_main.render() }}
+    {% endif %}
+    {% endblock %}
+
+    {% block search %}
+    {% if g.boxes.search %}
+        {{ g.boxes.search.render() }}
+    {% endif %}
+    {% endblock %}
+
+</div>
+
+<object id="logo" data="/theme/hfsmi_web.svg"></object>

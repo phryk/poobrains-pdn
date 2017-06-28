@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg version="1.1" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(0 -924.36)">
+  <path d="m64 930.16c-32.093 0-58.2 26.107-58.2 58.2 0 32.093 26.107 58.2 58.2 58.2 32.093 0 58.2-26.107 58.2-58.2 0-32.093-26.107-58.2-58.2-58.2zm0 8.4c27.554 0 49.8 22.246 49.8 49.8 0 27.554-22.246 49.8-49.8 49.8-27.554 0-49.8-22.246-49.8-49.8 0-27.554 22.246-49.8 49.8-49.8z" style="block-progression:tb;color:#000000;fill:none;stroke-width:2;stroke:#fefefe;text-indent:0;text-transform:none"/>
+  <path d="m35.969 950.49-3.8125 3.8438 10.031 10.031-10.031 10 3.8125 3.8438l10.031-10.031 10.031 10.031 3.8125-3.8125-10.031-10.031 10.031-10.031-3.8125-3.8438-10.031 10.031-10.031-10.031z" style="block-progression:tb;color:#000000;fill:none;opacity:.8;stroke-width:2;stroke:#aaff00;text-indent:0;text-transform:none"/>
+  <path d="m81.959 949.73c-8.0669 0-14.666 6.5956-14.666 14.662 0 8.0668 6.5994 14.666 14.666 14.666 8.0669 0 14.662-6.5994 14.663-14.666 0-8.0669-6.5956-14.662-14.663-14.662zm0 5.4c5.1485 0 9.2625 4.114 9.2625 9.2625 0 5.1485-4.114 9.2662-9.2625 9.2662-5.1485 0-9.2662-4.1178-9.2662-9.2662 0-5.1485 4.1178-9.2625 9.2662-9.2625z" style="block-progression:tb;color:#000000;fill:none;stroke-width:2;stroke:#fefefe;text-indent:0;text-transform:none"/>
+  <path d="m34 997.58v5.4063h30.531v9.4375c0 4.358 1.9506 7.9681 4.7812 10.219 2.8307 2.2507 6.4226 3.2634 9.9688 3.25 3.5462-0.013 7.1137-1.0508 9.9375-3.3125 2.8238-2.2618 4.7812-5.8728 4.7812-10.219v-9.375-2.625-2.7813h-60zm35.938 5.4063h18.656v9.375c0 2.8389-1.0626 4.6485-2.75 6s-4.1249 2.1157-6.5938 2.125c-2.4688 0.01-4.8819-0.7263-6.5625-2.0625s-2.75-3.1425-2.75-6v-9.4375z" style="block-progression:tb;color:#000000;fill:none;stroke-width:2;stroke:#fefefe;text-indent:0;text-transform:none"/>
+ </g>
+</svg>
