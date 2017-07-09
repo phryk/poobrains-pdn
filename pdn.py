@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 
 import math
+import string
 import os
 import random
 import datetime
@@ -178,7 +179,7 @@ class ScoredLink(poobrains.auth.Administerable):
 
     form_blacklist = ['id', 'external_site_count', 'updated']
 
-    link = poobrains.storage.fields.CharField(null=True, unique=True) # TODO: Add an URLField to poobrains.
+    link = poobrains.storage.fields.CharField(unique=True) # TODO: Add an URLField to poobrains.
     external_site_count = poobrains.storage.fields.IntegerField(null=True)
     updated = poobrains.storage.fields.DateTimeField(null=False, default=datetime.datetime.now)
 
@@ -284,6 +285,7 @@ class Source(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     type = poobrains.storage.fields.CharField() # TODO: We need some logic to make this useful. Also, build enum type compatible to sqlite+postgres?
+    date = poobrains.storage.fields.DateTimeField(null=True)
     author = poobrains.storage.fields.ForeignKeyField(SourceOrganizationAuthor)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
     description = poobrains.md.MarkdownField()
@@ -403,5 +405,128 @@ def mkdoge(response):
     return response
 
 
+##                                  ##
+## waffenfunde infoscraping things  ##
+##                                  ##
+
+MONITOR_PATTERNS = ['waffenfund', 'autodiebstahl']
+
+@poobrains.app.cron
+def scrape_blaulicht():
+
+    poobrains.app.debugger.set_trace()
+
+    owner = poobrains.auth.User.get(poobrains.auth.User.id == 2)
+
+    for pattern in MONITOR_PATTERNS:
+
+        article_urls = []
+        html = requests.get('http://www.presseportal.de/blaulicht/suche.htx?q=%s' % pattern).text
+        dom = bs4.BeautifulSoup(html)
+
+        poobrains.app.logger.info("Beginning crawl of pagination for search pattern '%s'." % pattern)
+
+        last_page = False
+        while not last_page:
+            
+            next_page = dom.find(attrs={'class': 'pagination-next'})
+            if next_page == None:
+                last_page = True
+            else:
+                # Why in the name of FUCK would you use spans with data-url for fucking links!?
+                next_page_url = 'http://www.presseportal.de/blaulicht/%s' % next_page['data-url']
+
+            for article in dom.find_all('article'):
+                article_urls.append(article.find('h2', attrs={'class': 'news-headline'}).a['href'])
+
+            if not last_page:
+                poobrains.app.logger.info("Next page: %s" % next_page_url)
+                dom = bs4.BeautifulSoup(requests.get(next_page_url).text)
+
+        poobrains.app.logger.info("URL collection done, found %d articles." % len(article_urls))
+
+        poobrains.app.logger.info("Beginning crawl of individual articles.")
+
+        for article_url in article_urls:
+
+            url = 'http://www.presseportal.de/%s' % article_url
+            dom = bs4.BeautifulSoup(requests.get(url).text)
+            poobrains.app.debugger.set_trace()
+
+            org_dom = dom.find('h2', attrs={'class': 'story-company'}).a
+
+            try:
+                org = SourceOrganization.get(SourceOrganization.title == org_dom.text)
+
+            except SourceOrganization.DoesNotExist:
+
+                org_link = ScoredLink()
+                org_link.link = 'http://www.presseportal.de%s' % org_dom['href']
+                org_link.save()
+
+                org = SourceOrganization()
+                org.name = poobrains.helpers.clean_string(org_dom.text)
+                org.title = org_dom.text
+                org.link = org_link
+                org.owner = owner
+                org.save()
+
+            try:
+                author = SourceAuthor.get(SourceAuthor.name == org.name)
+
+            except SourceAuthor.DoesNotExist:
+
+                author = SourceAuthor()
+                author.name = org.name
+                author.title = org.title
+                author.link = org.link
+                author.owner = owner
+
+                author.save()
+
+
+            try:
+                orgauthor = SourceOrganizationAuthor.get(SourceOrganizationAuthor.organization == org, SourceOrganizationAuthor.author == author)
+
+            except SourceOrganizationAuthor.DoesNotExist:
+
+                orgauthor = SourceOrganizationAuthor()
+                orgauthor.organization = org
+                orgauthor.author = author
+
+                orgauthor.save()
+
+            
+            try:
+                source_link = ScoredLink.get(ScoredLink.link == url)
+
+            except ScoredLink.DoesNotExist:
+
+                source_link = ScoredLink()
+                source_link.link = url
+
+                source_link.save()
+
+
+            try:
+
+                source = Source.get(Source.link == source_link)
+                poobrains.app.logger.info("Skipping existing source: %s" % url)
+
+            except Source.DoesNotExist:
+
+                source = Source()
+                source.link = source_link
+                source.type = "scrape_blaulicht"
+                source.author = orgauthor
+                source.title = dom.find('h1', attrs={'class': 'story-headline'}).text
+                source.name = poobrains.helpers.clean_string(source.title) 
+                source.description = dom.find(attrs={'class': 'story-text'}).text
+                source.owner = owner
+
+                source.save()
+                poobrains.app.logger.info("Saved source: %s" % url)
+
+                
 if __name__ == '__main__':
    app.cli() 
