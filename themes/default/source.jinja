@@ -4,6 +4,8 @@
 
     {% if mode == 'full' %}
         {{ content.description.render() }}
+
+        {{ content.link.render('inline') }}
     {% else %}
         <code>{{ content.description|truncate }}</code>
     {% endif %}

@@ -10,6 +10,7 @@ import datetime
 import requests
 import bs4
 import markdown
+import click
 import flask
 import poobrains
 
@@ -196,7 +197,7 @@ class ScoredLink(poobrains.auth.Administerable):
 
             link_domain = self.link.split('/')[2]
 
-            html = requests.get(self.link).text
+            html = requests.get(self.link, timeout=30).text
             dom = bs4.BeautifulSoup(html)
 
             scored_elements = {
@@ -230,12 +231,12 @@ class ScoredLink(poobrains.auth.Administerable):
 
     
     def prepared(self):
-
+        
         super(ScoredLink, self).prepared()
         self.set_size = self.__class__.select().count()
 
         external_site_counts = []
-        for row in self.__class__.select(self.__class__.external_site_count).order_by(self.__class__.external_site_count).dicts():
+        for row in self.__class__.select(self.__class__.external_site_count).where(self.__class__.external_site_count != None).order_by(self.__class__.external_site_count).dicts():
             external_site_counts.append(row['external_site_count'])
 
         self.mean = sum(external_site_counts) / float(len(external_site_counts))
@@ -409,22 +410,20 @@ def mkdoge(response):
 ## waffenfunde infoscraping things  ##
 ##                                  ##
 
-MONITOR_PATTERNS = ['waffenfund', 'autodiebstahl']
+MONITOR_PATTERNS = ['waffenfund', 'waffe gefunden', 'waffen gefunden']
 
 @poobrains.app.cron
 def scrape_blaulicht():
 
-    poobrains.app.debugger.set_trace()
 
     owner = poobrains.auth.User.get(poobrains.auth.User.id == 2)
-
     for pattern in MONITOR_PATTERNS:
 
         article_urls = []
-        html = requests.get('http://www.presseportal.de/blaulicht/suche.htx?q=%s' % pattern).text
+        html = requests.get('http://www.presseportal.de/blaulicht/suche.htx?q=%s' % pattern, timeout=30).text
         dom = bs4.BeautifulSoup(html)
 
-        poobrains.app.logger.info("Beginning crawl of pagination for search pattern '%s'." % pattern)
+        click.echo("Beginning crawl of pagination for search pattern '%s'." % pattern)
 
         last_page = False
         while not last_page:
@@ -440,23 +439,40 @@ def scrape_blaulicht():
                 article_urls.append(article.find('h2', attrs={'class': 'news-headline'}).a['href'])
 
             if not last_page:
-                poobrains.app.logger.info("Next page: %s" % next_page_url)
-                dom = bs4.BeautifulSoup(requests.get(next_page_url).text)
+                click.echo("Next page: %s" % next_page_url)
+                dom = bs4.BeautifulSoup(requests.get(next_page_url, timeout=30).text)
 
-        poobrains.app.logger.info("URL collection done, found %d articles." % len(article_urls))
+        click.echo("URL collection done, found %d articles." % len(article_urls))
 
-        poobrains.app.logger.info("Beginning crawl of individual articles.")
+        click.echo("Beginning crawl of individual articles.")
 
         for article_url in article_urls:
 
-            url = 'http://www.presseportal.de/%s' % article_url
-            dom = bs4.BeautifulSoup(requests.get(url).text)
-            poobrains.app.debugger.set_trace()
+            url = 'http://www.presseportal.de%s' % article_url
+
+            try:
+                testlink = ScoredLink.get(ScoredLink.link == url)
+                if Source.select().where(Source.link == testlink).count():
+                    click.echo("Already know source with link %s, skipping." % url)
+                    continue
+
+            except ScoredLink.DoesNotExist:
+                pass
+
+            try:
+                dom = bs4.BeautifulSoup(requests.get(url, timeout=30).text)
+            except requests.exceptions.ConnectionError as e:
+                message = 'ConnectionError for %s: %s' % (url, e.message)
+                click.echo(message)
+                poobrains.app.logger.error(message)
+                continue
 
             try:
                 org_dom = dom.find('h2', attrs={'class': 'story-company'}).a
             except Exception as e:
-                poobrains.app.logger.error("Couldn't extract source organization for %s" % url)
+                message = "Couldn't extract source organization for %s" % url
+                click.echo(message)
+                poobrains.app.logger.error(message)
                 continue
 
             try:
@@ -512,16 +528,16 @@ def scrape_blaulicht():
                 source_link.save()
 
 
-            source_title = dom.find('h1', attrs={'class': 'story-headline'}).text
+            source_title = dom.find('h1', attrs={'class': 'story-headline'}).text.strip()
             source_name = poobrains.helpers.clean_string(source_title)
 
             try:
 
                 source = Source.get(Source.name == source_name)
-                poobrains.app.logger.info("Skipping existing source: %s" % url)
+                click.echo("Skipping existing source: %s" % url)
 
             except Source.DoesNotExist:
-
+                #YOINK
                 source = Source()
                 source.link = source_link
                 source.type = "scrape_blaulicht"
@@ -532,7 +548,7 @@ def scrape_blaulicht():
                 source.owner = owner
 
                 source.save()
-                poobrains.app.logger.info("Saved source: %s" % url)
+                click.echo("Saved source: %s" % url)
 
                 
 if __name__ == '__main__':
