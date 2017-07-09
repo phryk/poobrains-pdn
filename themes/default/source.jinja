@@ -1,0 +1,11 @@
+{% extends "commentable.jinja" %}
+
+{% block content %}
+
+    {% if mode == 'full' %}
+        {{ content.description.render() }}
+    {% else %}
+        <code>{{ content.description|truncate }}</code>
+    {% endif %}
+
+{% endblock%}

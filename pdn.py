@@ -453,7 +453,11 @@ def scrape_blaulicht():
             dom = bs4.BeautifulSoup(requests.get(url).text)
             poobrains.app.debugger.set_trace()
 
-            org_dom = dom.find('h2', attrs={'class': 'story-company'}).a
+            try:
+                org_dom = dom.find('h2', attrs={'class': 'story-company'}).a
+            except Exception as e:
+                poobrains.app.logger.error("Couldn't extract source organization for %s" % url)
+                continue
 
             try:
                 org = SourceOrganization.get(SourceOrganization.title == org_dom.text)
@@ -508,9 +512,12 @@ def scrape_blaulicht():
                 source_link.save()
 
 
+            source_title = dom.find('h1', attrs={'class': 'story-headline'}).text
+            source_name = poobrains.helpers.clean_string(source_title)
+
             try:
 
-                source = Source.get(Source.link == source_link)
+                source = Source.get(Source.name == source_name)
                 poobrains.app.logger.info("Skipping existing source: %s" % url)
 
             except Source.DoesNotExist:
@@ -519,8 +526,8 @@ def scrape_blaulicht():
                 source.link = source_link
                 source.type = "scrape_blaulicht"
                 source.author = orgauthor
-                source.title = dom.find('h1', attrs={'class': 'story-headline'}).text
-                source.name = poobrains.helpers.clean_string(source.title) 
+                source.title = source_title
+                source.name = source_name
                 source.description = dom.find(attrs={'class': 'story-text'}).text
                 source.owner = owner
 
