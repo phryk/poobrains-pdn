@@ -534,7 +534,7 @@ def scrape_blaulicht():
             try:
 
                 source = Source.get(Source.name == source_name)
-                click.echo("Skipping existing source: %s" % url)
+                click.echo("Already have a source named %s. Probably indicates duplicate names. Current URL %s" % (source_name, url))
 
             except Source.DoesNotExist:
                 #YOINK
