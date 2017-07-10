@@ -544,6 +544,10 @@ def scrape_blaulicht():
                 click.echo("Already have a source named %s. Probably indicates duplicate names. Current URL %s" % (source_name, url))
 
             except Source.DoesNotExist:
+                if poobrains.app.debug:
+                    poobrains.app.debugger.set_trace()
+
+                date_string = dom.find(attrs={'class': 'story-date'}).text.strip().replace(u'\u2013', '-') # \u2013 is a unicode dash
 
                 source = Source()
                 source.link = source_link
@@ -551,8 +555,8 @@ def scrape_blaulicht():
                 source.author = orgauthor
                 source.title = source_title
                 source.name = source_name
-                source.description = dom.find(attrs={'class': 'story-text'}).text.strip()
-                source.date = dom.find(attrs={'class': 'story-date'}).text.strip() 
+                source.description = dom.find(attrs={'class': 'story-text'}).text.strip().replace('<', '&lt;').replace('>', '&gt;')
+                source.date = datetime.datetime.strptime(date_string, "%d.%m.%Y - %H:%M") # format string contains a *dash*, not a minus!
                 source.owner = owner
 
                 source.save()
