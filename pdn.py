@@ -461,8 +461,8 @@ def scrape_blaulicht():
 
             try:
                 dom = bs4.BeautifulSoup(requests.get(url, timeout=30).text)
-            except requests.exceptions.ConnectionError as e:
-                message = 'ConnectionError for %s: %s' % (url, e.message)
+            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+                message = '%s for %s: %s' % (type(e).__name__, url, e.message)
                 click.echo(message)
                 poobrains.app.logger.error(message)
                 continue
@@ -480,9 +480,16 @@ def scrape_blaulicht():
 
             except SourceOrganization.DoesNotExist:
 
-                org_link = ScoredLink()
-                org_link.link = 'http://www.presseportal.de%s' % org_dom['href']
-                org_link.save()
+                org_url = 'http://www.presseportal.de%s' % org_dom['href']
+
+                try:
+                    org_link = ScoredLink.get(ScoredLink.link == org_url)
+
+                except ScoredLink.DoesNotExist:
+
+                    org_link = ScoredLink()
+                    org_link.link = org_url
+                    org_link.save()
 
                 org = SourceOrganization()
                 org.name = poobrains.helpers.clean_string(org_dom.text)
@@ -537,14 +544,15 @@ def scrape_blaulicht():
                 click.echo("Already have a source named %s. Probably indicates duplicate names. Current URL %s" % (source_name, url))
 
             except Source.DoesNotExist:
-                #YOINK
+
                 source = Source()
                 source.link = source_link
                 source.type = "scrape_blaulicht"
                 source.author = orgauthor
                 source.title = source_title
                 source.name = source_name
-                source.description = dom.find(attrs={'class': 'story-text'}).text
+                source.description = dom.find(attrs={'class': 'story-text'}).text.strip()
+                source.date = dom.find(attrs={'class': 'story-date'}).text.strip() 
                 source.owner = owner
 
                 source.save()
