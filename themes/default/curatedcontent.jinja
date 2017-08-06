@@ -6,6 +6,6 @@
         {{ content.description.render() }}
         <span id="source-link">{{ content.link.render('inline') }}</span>
     {% else %}
-        {{ content.description|truncate }}
+        <pre class="markdown">{{ content.description|truncate }}</pre>
     {% endif %}
 {% endblock %}
