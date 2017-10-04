@@ -4,7 +4,7 @@
 
 {% block content %}
 <article class="{{ content.__class__.__name__.lower() }}">
-    <a target="_blank" href="{{ content.link }}">{{ content.link }}</a>
+    <a rel="noopener noreferrer" target="_blank" href="{{ content.link }}">{{ content.link }}</a>
     <span class="external-site-count">External site count: {{ content.external_site_count }}</span>
     <span class="median">Median: {{ content.median }}</span>
     <span class="mean">Mean: {{ content.mean }}</span>
