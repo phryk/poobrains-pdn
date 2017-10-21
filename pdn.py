@@ -54,6 +54,7 @@ class Memextension(markdown.Extension):
 
 poobrains.md.md.registerExtensions([Memextension()], [])
 
+
 @app.expose('/meme/<string:name>/<string:caption>')
 class Mememage(poobrains.auth.Protected):
     
@@ -178,7 +179,8 @@ class MemeWhiteList(poobrains.storage.Model):
 
 class ScoredLink(poobrains.auth.Administerable):
 
-    form_blacklist = ['id', 'external_site_count', 'updated']
+    class Meta:
+        form_blacklist = ['id', 'external_site_count', 'updated']
 
     link = poobrains.storage.fields.CharField(unique=True) # TODO: Add an URLField to poobrains.
     external_site_count = poobrains.storage.fields.IntegerField(null=True)
