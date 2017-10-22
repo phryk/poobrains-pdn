@@ -16,3 +16,6 @@ config.py
 upload
 gnupg
 memes
+pdn.ini
+pdn.nginx.conf
+tls/
