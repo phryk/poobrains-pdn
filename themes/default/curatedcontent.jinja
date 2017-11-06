@@ -2,9 +2,16 @@
 
 {% block content %}
     {% if mode == 'full' %}
-        <a class="tldr" href="#source-link">SHUT THE FUCK UP AND GIVE ME THE LINK!</a>
+        <a class="tldr" href="#source-link">SHUT THE FUCK UP AND GIVE ME THE ORIGINAL LINK!</a>
         {{ content.description.render() }}
-        <span id="source-link">{{ content.link.render('inline') }}</span>
+        {% if content.link %}
+            <div id="source-link">
+                <span>This content originates from:</span>
+                {{ content.link.render('inline') }}
+            </div>
+        {% else %}
+            <div id="source-link">No associated link selected.</div>
+        {% endif %}
     {% else %}
         <pre class="markdown">{{ content.description|truncate }}</pre>
     {% endif %}

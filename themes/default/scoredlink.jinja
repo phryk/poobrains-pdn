@@ -3,11 +3,12 @@
 {% block header %}{% endblock %}
 
 {% block content %}
-<article class="{{ content.__class__.__name__.lower() }}">
-    <a rel="noopener noreferrer" target="_blank" href="{{ content.link }}">{{ content.link }}</a>
-    <span class="external-site-count">External site count: {{ content.external_site_count }}</span>
-    <span class="median">Median: {{ content.median }}</span>
-    <span class="mean">Mean: {{ content.mean }}</span>
-    <span class="set-size">Set size: {{ content.set_size }}</span>
-</article>
+    <a class="link" rel="noopener noreferrer" target="_blank" href="{{ content.link }}">{{ content.link }}</a>
+
+    <div class="stats">
+        <span class="external-site-count">External site count: {{ content.external_site_count }}</span>
+        <span class="median">Median: {{ content.median }}</span>
+        <span class="mean">Mean: {{ content.mean }}</span>
+        <span class="set-size">Set size: {{ content.set_size }}</span>
+    </div>
 {% endblock %}

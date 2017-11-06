@@ -2,6 +2,38 @@ object#logo {
     opacity: 0.8;
 }
 
-body > header {
-    justify-content: space-around !important;
+article.content-type-scoredlink {
+
+    a.link {
+        font-weight: bold;
+    }
+}
+
+a.tldr {
+
+    text-align: center;
+    display: block;
+    font-weight: bold;
+
+    &:hover,
+    &:focus {
+    }
+}
+
+div#source-link {
+   
+    padding: 0.5rem;
+
+    &:hover,
+    &:focus,
+    &:target {
+
+        background: opacify($color_highlight, -30%);
+        color: $color_font_dark;
+        animation: attentionflash 4s infinite;
+
+        a {
+            color: $color_font_dark;
+        }
+    }
 }
