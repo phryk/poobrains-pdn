@@ -198,13 +198,13 @@ class ScoredLink(poobrains.auth.Administerable):
         if self.link:
 
             link_domain = self.link.split('/')[2]
-
+        
             html = requests.get(self.link, timeout=30).text
             dom = bs4.BeautifulSoup(html)
 
             scored_elements = {
                 'script': 'src',
-                'link': 'src',
+                'link': 'href',
                 'img': 'src',
                 'object': 'data'
             }
@@ -212,9 +212,10 @@ class ScoredLink(poobrains.auth.Administerable):
             for tag, attribute in scored_elements.iteritems():
                 for element in dom.find_all(tag):
                     attribute_value = element.get(attribute)
-                    if isinstance(attribute_value, basestring) and attribute_value.find('://') >= 0:
+                    if isinstance(attribute_value, basestring) and attribute_value.find('://') >= 0: # means this isn't a relative link
                         attribute_domain = attribute_value.split('/')[2]
-                        if attribute_domain != link_domain:
+                        if attribute_domain != link_domain and \
+                        not attribute_domain.endswith('.%s' % link_domain): # whether attribute_domain is a subdomain of link_domain
                             external_site_count += 1
 
         return external_site_count
@@ -229,11 +230,14 @@ class ScoredLink(poobrains.auth.Administerable):
             poobrains.app.logger.error('Could not scrape external site count for URL: %s' % self.link)
             poobrains.app.logger.debug('Problem when scraping external site count: %s: %s' % (str(type(e)), e.message))
 
+            if app.debug:
+                raise # break hard in debug mode to make it easier to find problems
+
         return super(ScoredLink, self).save(*args, **kwargs)
 
     
     def prepared(self):
-        
+
         super(ScoredLink, self).prepared()
         self.set_size = self.__class__.select().count()
 
@@ -249,9 +253,9 @@ class ScoredLink(poobrains.auth.Administerable):
             a = external_site_counts[median_idx -1]
             b = external_site_counts[median_idx]
 
-            self.median = a + b / 2.0
+            self.median = (a + b) / 2.0
         else:
-            self.median = external_site_counts[median_idx]
+            self.median = float(external_site_counts[median_idx])
 
 
 
@@ -413,6 +417,21 @@ def mkdoge(response):
 ##                                  ##
 
 MONITOR_PATTERNS = ['waffenfund', 'waffe gefunden', 'waffen gefunden']
+
+@poobrains.app.cron
+def scrape_linkscores():
+
+    now = datetime.datetime.now()
+    period = datetime.timedelta(days=7)
+    count = 0 # keep track of how many scores we actually update
+    with click.progressbar(ScoredLink.select(), label="Update link scores where necessary", item_show_func=lambda x: x.link if x else '') as links: # iterates through all non-abstract Models
+        for link in ScoredLink.select():
+            if now - period > link.updated: # update at most once per `period`
+                link.save() # ScoredLink scores are updated on every .save
+                count += 1
+
+    click.echo("Updated %d link scores." % count)
+
 
 @poobrains.app.cron
 def scrape_blaulicht():
