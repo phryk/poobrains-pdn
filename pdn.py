@@ -301,7 +301,11 @@ class Source(poobrains.commenting.Commentable):
 @app.expose('/article/', mode='full')
 class Article(poobrains.commenting.Commentable):
 
+    class Meta:
+        order_by = ['-date']
+
     title = poobrains.storage.fields.CharField()
+    date = poobrains.storage.fields.DateTimeField(default=datetime.datetime.now)
     text = poobrains.md.MarkdownField()
 
 

@@ -2,11 +2,19 @@ object#logo {
     opacity: 0.8;
 }
 
+
+
 article.content-type-scoredlink {
 
     a.link {
         font-weight: bold;
     }
+}
+
+article.content-type-article footer .date {
+
+    font-family: 'Orbitron';
+    font-size: 1rem;
 }
 
 a.tldr {

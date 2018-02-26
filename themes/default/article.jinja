@@ -13,3 +13,8 @@
         <pre class="markdown">{{ content.text|truncate }}</pre>
     {% endif %}
 {% endblock %}
+
+{% block footer %}
+    {{ super() }}
+    <span class="date">{{ content.date }}</span>
+{% endblock %}
