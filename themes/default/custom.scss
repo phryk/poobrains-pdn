@@ -19,12 +19,33 @@ article.content-type-article footer .date {
 
 a.tldr {
 
-    text-align: center;
     display: block;
+
+    width: 100%;
+    height: 4rem;
+    padding-left: 4rem;
+    margin-bottom: 0.5rem;
+    background: $color_background_light url('/theme/icons/link.svg#dark') no-repeat;
+    background-size: contain;
+    color: $color_font_dark;
+    box-sizing: border-box;
+
     font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    line-height: 4rem;
+
+    font-family: 'Orbitron';
+
+    transition: color 0.3s linear, background 0.3s linear;
 
     &:hover,
     &:focus {
+        
+        background-image: url('/theme/icons/link.svg');
+        background-color: opacify($color_highlight, -20%);
+        color: $color_font_light;
+
     }
 }
 

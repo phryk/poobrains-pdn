@@ -236,26 +236,41 @@ class ScoredLink(poobrains.auth.Administerable):
         return super(ScoredLink, self).save(*args, **kwargs)
 
     
-    def prepared(self):
+    @property
+    def set_size(self):
 
-        super(ScoredLink, self).prepared()
-        self.set_size = self.__class__.select().count()
+        return self.__class__.select().count()
 
+
+    @property
+    def external_site_counts(self):
+        
         external_site_counts = []
         for row in self.__class__.select(self.__class__.external_site_count).where(self.__class__.external_site_count != None).order_by(self.__class__.external_site_count).dicts():
             external_site_counts.append(row['external_site_count'])
 
-        self.mean = sum(external_site_counts) / float(len(external_site_counts))
+        return external_site_counts
 
-        median_idx = int(math.floor(len(external_site_counts) / 2.0))
-        if len(external_site_counts) % 2 == 0:
 
-            a = external_site_counts[median_idx -1]
-            b = external_site_counts[median_idx]
+    @property
+    def median(self):
 
-            self.median = (a + b) / 2.0
+        median_idx = int(math.floor(len(self.external_site_counts) / 2.0))
+        if len(self.external_site_counts) % 2 == 0:
+
+            a = self.external_site_counts[median_idx -1]
+            b = self.external_site_counts[median_idx]
+
+            median = (a + b) / 2.0
         else:
-            self.median = float(external_site_counts[median_idx])
+            median = float(self.external_site_counts[median_idx])
+
+        return median
+
+
+    @property
+    def mean(self):
+        return sum(self.external_site_counts) / float(len(self.external_site_counts))
 
 
 
