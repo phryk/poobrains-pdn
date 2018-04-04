@@ -307,7 +307,6 @@ class Source(poobrains.commenting.Commentable):
 
     title = poobrains.storage.fields.CharField()
     type = poobrains.storage.fields.CharField() # TODO: We need some logic to make this useful. Also, build enum type compatible to sqlite+postgres?
-    date = poobrains.storage.fields.DateTimeField(null=True)
     author = poobrains.storage.fields.ForeignKeyField(SourceOrganizationAuthor)
     link = poobrains.storage.fields.ForeignKeyField(ScoredLink, null=True)
     description = poobrains.md.MarkdownField()
@@ -316,11 +315,7 @@ class Source(poobrains.commenting.Commentable):
 @app.expose('/article/', mode='full')
 class Article(poobrains.commenting.Commentable):
 
-    class Meta:
-        order_by = ['-date']
-
     title = poobrains.storage.fields.CharField()
-    date = poobrains.storage.fields.DateTimeField(default=datetime.datetime.now)
     text = poobrains.md.MarkdownField()
 
 
