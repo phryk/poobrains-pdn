@@ -200,7 +200,7 @@ class ScoredLink(poobrains.auth.Administerable):
             link_domain = self.link.split('/')[2]
         
             html = requests.get(self.link, timeout=30).text
-            dom = bs4.BeautifulSoup(html)
+            dom = bs4.BeautifulSoup(html, 'lxml')
 
             scored_elements = {
                 'script': 'src',
@@ -456,7 +456,7 @@ def scrape_blaulicht():
 
         article_urls = []
         html = requests.get('http://www.presseportal.de/blaulicht/suche.htx?q=%s' % pattern, timeout=30).text
-        dom = bs4.BeautifulSoup(html)
+        dom = bs4.BeautifulSoup(html, 'lxml')
 
         click.echo("Beginning crawl of pagination for search pattern '%s'." % pattern)
 
@@ -471,11 +471,14 @@ def scrape_blaulicht():
                 next_page_url = 'http://www.presseportal.de/blaulicht/%s' % next_page['data-url']
 
             for article in dom.find_all('article'):
-                article_urls.append(article.find('h2', attrs={'class': 'news-headline'}).a['href'])
+                try:
+                    article_urls.append(article.find('h2', attrs={'class': 'news-headline'}).a['href'])
+                except Exception as e:
+                    click.echo("Article appears to be without headline link, skipping")
 
             if not last_page:
                 click.echo("Next page: %s" % next_page_url)
-                dom = bs4.BeautifulSoup(requests.get(next_page_url, timeout=30).text)
+                dom = bs4.BeautifulSoup(requests.get(next_page_url, timeout=30).text, 'lxml')
 
         click.echo("URL collection done, found %d articles." % len(article_urls))
 
@@ -495,7 +498,7 @@ def scrape_blaulicht():
                 pass
 
             try:
-                dom = bs4.BeautifulSoup(requests.get(url, timeout=30).text)
+                dom = bs4.BeautifulSoup(requests.get(url, timeout=30).text, 'lxml')
             except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
                 message = '%s for %s: %s' % (type(e).__name__, url, e.message)
                 click.echo(message)
