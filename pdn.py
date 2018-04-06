@@ -303,6 +303,7 @@ class SourceAuthor(poobrains.commenting.Commentable):
     description = poobrains.md.MarkdownField(null=True)
 
 
+@app.expose('/source/organizationauthor/', mode='full')
 class SourceOrganizationAuthor(poobrains.commenting.Commentable):
 
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization)
@@ -563,8 +564,10 @@ def scrape_blaulicht():
             except SourceOrganizationAuthor.DoesNotExist:
 
                 orgauthor = SourceOrganizationAuthor()
+                orgauthor.name = '%s-%s' % (org.name, author.name)
                 orgauthor.organization = org
                 orgauthor.author = author
+                orgauthor.owner = owner
 
                 orgauthor.save()
 
