@@ -303,7 +303,7 @@ class SourceAuthor(poobrains.commenting.Commentable):
     description = poobrains.md.MarkdownField(null=True)
 
 
-class SourceOrganizationAuthor(poobrains.storage.Model):
+class SourceOrganizationAuthor(poobrains.commenting.Commentable):
 
     organization = poobrains.storage.fields.ForeignKeyField(SourceOrganization)
     author = poobrains.storage.fields.ForeignKeyField(SourceAuthor)
