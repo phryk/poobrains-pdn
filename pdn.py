@@ -19,6 +19,13 @@ from PIL import Image, ImageDraw, ImageFont, ImageSequence
 
 app = poobrains.app
 
+@app.route('/')
+def front():
+    try:
+        return poobrains.redirect(poobrains.auth.User.load('phryk').url('full'))
+    except Exception:
+        return poobrains.redirect(Article.url())
+
 class MemePattern(markdown.inlinepatterns.Pattern):
 
     name = None
